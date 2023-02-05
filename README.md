@@ -1,4 +1,4 @@
-# R_project
+# R_projects
 R을 이용한 데이터 분석
 
 - R_esay(20.12~21.01)
