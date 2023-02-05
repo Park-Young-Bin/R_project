@@ -1,0 +1,107 @@
+---
+title: "영업 사원 교육 효과 분석"
+author: "PYB"
+date: '2021 2 4 '
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## **영업 사원 교육 효과 분석**
+
+#### [분석문제]  
+
+Y회사는 영업 사원들의 업무 향상을 도모하기 위해 2가지의 교육 방법을 도입하였다. 교육 방법은 집체 교육과 멘터링 교육이다. 영업 사원들을 두 팀으로 나누어 한 팀은 집체 교육을, 다른 팀은 멘터링 교육을 진행하였다.  그리고 교육을 받은 후 영업사원들의 영업실적으로 조사하였다.
+
+1. 교육방법별로 교육을 이수한 사람들의 빈도수와 영업실적 평균값을 구하시오.  
+1. 두 교육방법별 영업실적 데이터 간에 분포모양이 비슷한지를 검증하시오.(var.test)
+1. 두 집단 간의 영업실적 차이가 있는지 검증하시오.
+
+두 집단의 평균이 서로 같은지 다른지를 검증하는 것을 두 집단 평균차이 분석(two sample t-test)이라고 한다. 여기서 두 집단은 독립을 의미한다. 그리고 t-test를 실시하기 위해 등분산성, 정규성이 만족되어야 하며, 이를 위해 var.test 검증이 필요하다.
+
+#### [변수 설명]
+
+id: ID번호  
+method: 교육방법(1: 집체교육, 2: 멘토링교육)
+performance: 영업직원들의 영업실적(단위: 억 원)  
+(입사 6개월 이내 인력은 교육을 받았어도 영업실적조사에서 제외함 "< 99"로 표기)
+
+### 1. 실습 데이터 불러오기 및 읽기
+```{r}
+mymethod <- read.csv("C:/Users/user/Desktop/R/Practice/ubion/mymethod.csv")
+head(mymethod)
+str(mymethod)
+class(mymethod)
+table(is.na(mymethod))
+```
+
+### 2. 데이터 변환
+subset은 설정하는 조건에 맞는 벡터, 매트릭스 혹은 데이터 프레임을 반환한다.  
+x에는 벡터, 매트릭스, 데이터 프레임이 모두 들어갈 수 있으며, select는 열을 가지고 있는 데이터 프레임에만 적용된다.  
+
+* 결측치를 제거하기 위해 performance < 99 라는 조건을 지정한다.
+* length: 벡터의 길이, dataframe의 열의 개수를 셀 때 사용한다.
+```{r}
+# 기본형태
+# subset(x = diamonds, subset = , select = )
+groupA <- subset(mymethod, method == 1 & performance < 99)
+groupB <- subset(mymethod, method == 2 & performance < 99)
+
+head(groupA)
+head(groupB)
+
+groupAcount <- length(groupA$method) # method 열의 행 개수
+groupAmean <- round(mean(groupA$performance), 2) # 영업실적 평균
+groupAcount;groupAmean # 값 동시 출력
+
+groupBcount <- length(groupB$method) # method 열의 행 개수
+groupBmean <- round(mean(groupB$performance), 2) # 영업실적 평균
+groupBcount;groupBmean # 값 동시 출력
+
+# 교차분석표
+groupcount <- c(groupAcount, groupBcount)
+groupmean <- c(groupAmean, groupBmean)
+groupcount;groupmean
+
+grouptable <- data.frame(Freq = groupcount, Mean = groupmean)
+grouptable
+```
+
+### 3. 등분산 검정
+var.test 함수를 이용하여 두 집단의 분산이 동일한지 검정한다.(F-검정)
+
+H0: 두 집단의 분산이 서로 동일하다.  
+H1: 두 집단의 분산이 서로 다르다.  
+a(유의수준) =  0.05
+```{r}
+var.test(groupA$performance, groupB$performance)
+```
+검정 결과 유의확률(p-값 = 0.8494)가 유의수준 0.05보다 크므로 귀무가설을 채택한다.  
+따라서 두 집단의 분산이 동일하다는 것이 성립되었으므로 t-test를 한다.  
+따라서 아래에 t-test 할 때는 분산 동일성 여부에 대한 옵션에서 TRUE (var.equal = T)를 지정하면 되겠다.
+
+### 4. t-test
+t.test 함수를 이용하여 두 집단 간 평균 차이 검정을 실시한다.  
+
+#### [함수 사용법]
+t.test(x, y, alternative = c("two.sided", "less", "*greater") , var.equal = T/F, conf.level = )  
+x = x 집단 , y = y 집단 
+
+|대립가설|의미 |
+|---|--------|
+| two.sided | 대립가설: A의 평균 =/= B의 평균 |
+| lgreater | 대립가설: A의 평균 > B의 평균 |
+| less | 대립가설: A의 평균 < B의 평균 |  
+
+#### [가설 (유의수준, a = 0.05)]
+x = 집체교육 수강한 영업사원의 영업실적, y = 멘토링교육 수강한 영업사원의 영업실적  
+H0: x >= y  
+H1: x < y
+```{r}
+t.test(groupA$performance, groupB$performance, alternative = "less", var.equal = T, conf.level = 0.95)
+```
+분석결과 유의확률(p-value = 2.973e-07)이 유의 수준(a =  0.05)보다 작다는 것을 알 수 있다.
+따라서 귀무가설을 기각하여 멘토링교육을 수강한 영업사원의 영업실적이 더 높다고 판단할 수 있다.
+그러므로 Y회사는 앞으로 영업사원을 교육할 때 집체교육보다는 멘토링교육을 하는 것이 영업실적을 올리는 데에 더 도움이 될 것이다.

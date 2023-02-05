@@ -1,0 +1,85 @@
+---
+title: "Dietary Effect"
+author: "PYB"
+date: '2021 2 8 '
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## **다이어트 식품 효과 분석**
+
+#### [분석문제]  
+
+"Be In A Good Shape" 다이어트 식품 제조 회사는 연구개발 중인 새로운 다이어트 효능 식품을 복용한 시험 참가자의 몸무게 변화를 조사하였다. 이 다이어트 식품의 효과는 있는 것일까?
+
+1. 복용 전후의 참가자의 빈도수와 몸무게 평균을 구하라.  
+1. 실제 한 달 간의 시험기간을 완수한 참가자들만의 데이터를 별도로 추출해라.
+1. 2개의 몸무게 집단 데이터 간의 분포 모양이 비슷한지 검정해라.
+1. 복용 전후에 효과 차이가 있는지 검정하라.
+
+짝을 이루는 두 집단의 평균이 서로 같은지, 다른지를 검정하는 것을 대응검정이라고 한다. 또한 짝지어진 변수값 차이의 평균이 특정한 값과 같은지를 검증한다.  
+"짝을 이룬다/대응을 이룬다"는 표현은 독립적인 두 집단이 아니라 before/after처럼 하나의 집단에서 두 번의 측정이 이루어 진 것을 말한다. 따라서 한 집단을 대상으로 사전-사후효과 비교 시 많이 사용되고 있다.  
+그리고 t-test를 실시하기 위해 등분산성, 정규성이 만족되어야 한다.(다만 이번 분석에서는 정규성을 가정하고 등분산성 여부만 검정한다.)  (정규성의 경우 일반적으로 관측 갯수가 30개 이상일 때 만족한다고 판단할 수 있다.)
+
+#### [변수 설명]
+
+id: ID번호  
+before: 다이어트 효능식품 복용 전 몸무게  
+after: 다이어트 효능식품 봉용 후 몸무게  
+(단, 1달 동안의 몸무게 수치이며, 중도포기자는 조사에서 제외함 -> 999로 표시)
+
+#### [가설]
+H0: 다이어트 효능식품은 효과가 없다.  
+H1: 다이어트 효능식품은 효과가 있다.
+
+### 1. 실습 데이터 불러오기 및 읽기
+```{r}
+library(dplyr)
+myeffect <- read.csv("C:/Users/user/Desktop/R/Practice/ubion/myeffect.csv", header = T)
+head(myeffect)
+tail(myeffect)
+str(myeffect)
+summary(myeffect)
+class(myeffect)
+table(is.na(myeffect)) # 결측치 확인
+boxplot(myeffect$before)$stats # before 변수 이상치 확인
+boxplot(myeffect$after)$stats # after 변수 이상치 
+```
+상자 그래프를 통해 after에만 999가 있음을 확인했다.
+
+### 2. 데이터 전처리
+after변수에 999값인 데이터를 제거하여 새로운 데이터를 만든다.
+```{r}
+new <- subset(myeffect, after != 999, c(before, after))
+head(new)
+tail(new)
+length(new$before) # 참가자 빈도수(열 개수, before)
+length(new$after) # 참가자 빈도수(열 개수, before)
+mean(new$before) # before 몸무게 평균
+mean(new$after) # after 몸무게 평균
+```
+
+### 3. 등분산성 검정
+var.test 함수를 이용하여 두 집단의 분산이 동일한지 검정한다.(F-검정)
+H0: 두 집단의 분산이 동일하다.  
+H1: 두 집단의 분산이 동일하지 않다.
+```{r}
+var.test(new$before, new$after, paired = T)
+```
+유의확률(p-value)이 0.006234이고 유의확률 0.05보다 작으므로 귀무가설을 기각한다. 따라서 등분산 가정을 할 수 없으므로 t.test 검정을 이용할 수 없다.  
+이때 wilcox.test 검정을 해야 한다.
+
+(참고) 정규성 검정  
+shapiro 함수를 이용하여 정규성을 검정한다.  
+shapiro 함수는 한 번에 하나의 인수를 갖기 때문에 사전, 사후 데이터를 각각 나눈다.
+
+### 4. 윌콕슨 검정
+등분산 가정이 성립하지 않으므로 윌콕슨 검정을 시행한다.
+```{r}
+wilcox.test(new$before, new$after, paired = T, alter = "two.sided")
+```
+유의확률(p-value)이 2.983e-15이고 유의확률 0.05보다 작으므로 귀무가설을 기각한다.  
+따라서 효능식품 복용 전과 후의 몸무게 차이가 있다는 것이 유의적으로 확인된다.
