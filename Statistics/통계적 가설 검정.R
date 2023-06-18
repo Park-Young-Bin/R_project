@@ -43,7 +43,7 @@ head(dat)
 var.test(SBP.g1, SBP.g2) # p-value = 0.3548 > 0.05 → H0 채택
 
 library(car) # Levene's test를 이용한 검정
-leveneTest(dat$SBP.g1, dat$SBP.g2, location = 'mean')
+leveneTest(dat$SBP.g1, dat$SBP.g2, location = 'mean') # p-value = 0.1693 → H0 채택
 
 # 정규성 검정
 # 참고: https://kbkb456.tistory.com/93
@@ -88,7 +88,7 @@ data = c(88, 92, 94, 94, 96, 97, 97, 97, 99, 99,
          105, 109, 109, 109, 110, 112, 112, 113, 114, 115)
 
 # perform one sample z-test
-z.test(data, mu = 100, sigma.x = 15)
+z.test(data, mu = 100, sigma.x = 15) # p-value = 0.3632
 
 # Z-test(Two Sample)----
 # 참고: https://www.statology.org/z-test-in-r/
@@ -106,7 +106,7 @@ cityB = c(90, 91, 91, 91, 95, 95, 99, 99, 108, 109,
           109, 114, 115, 116, 117, 117, 128, 129, 130, 133)
 
 # perform two sample z-test
-z.test(cityA, cityB, mu=0, sigma.x = 15, sigma.y = 15)
+z.test(cityA, cityB, mu=0, sigma.x = 15, sigma.y = 15) # p-value = 0.08577
 
 # One-way ANOVA----
 
@@ -188,7 +188,7 @@ summary(aov(count ~ spray, data = InsectSprays)) # 위의 결과와 동일
 oneway.test(count ~ spray, data = InsectSprays, var.equal = T) # 등분산 가정 조건 삽입
 
 # + 등분산이 아닐 경우 사후 검정----
-oneway.test(count ~ spray, data=InsectSprays, var.equal=FALSE)
+oneway.test(count ~ spray, data = InsectSprays, var.equal=FALSE)
 
 # 1) 모든 가능한 범주쌍 생성
 library(dplyr)
@@ -783,7 +783,7 @@ str(mtcars)
 mtcars2 <- mtcars[,  c('mpg', 'cyl', 'hp', 'wt')]
 cor(mtcars2)
 
-# 실린더 개수와 무게의 영향을 통제 후, 연비와 마력의 상관 파악
+# 실린더 개수(cyl)와 무게(wt)의 영향을 통제 후, 연비(mpg)와 마력(hp)의 상관 파악
 # 결과1: mpg와 hp 간의 높은 상관계수는 cyl와 wt의 영향을 받았을 가능성이 있다.
 # 결과2: 순수한 영향력 = -0.2758932
 # install.packages('ggm')
